@@ -30,7 +30,7 @@ st.title("🎬 영화 박스오피스 데이터 분석")
 df = load_data()
 
 # [3. 영화 선택 기능]
-# 누적관객수(최댓값) 기준으로 영화명을 내림차순 정렬하여 중복 없이 extraction
+# 누적관객수(최댓값) 기준으로 영화명을 내림차순 정렬하여 중복 없이 추출
 movie_rank = (
     df.groupby("영화명")["누적관객수"]
     .max()
@@ -47,14 +47,14 @@ selected_movie = st.sidebar.selectbox("분석할 영화를 선택하세요", mov
 filtered_df = df[df["영화명"] == selected_movie]
 
 # 메인 화면 레이아웃 구역 나누기 (Tab 활용)
-tab1, tab2 = st.tabs(["일별 관객수 추이", "추가 분석 구역 (예정)"])
+tab1, tab2 = st.tabs(["일별 관객수 추이 (선 그래프)", "누적 관객수 변화 (영역 차트)"])
 
-# [4. 선그래프 그리기]
+# [4. 첫 번째 그래프: 선그래프]
 with tab1:
     st.subheader(f"📊 '{selected_movie}' 일별 관객수 변화")
 
     # Plotly 선 그래프 생성
-    fig = px.line(
+    fig_line = px.line(
         filtered_df,
         x="기준일자",
         y="해당일관객수",
@@ -64,20 +64,36 @@ with tab1:
     )
 
     # 그래프 레이아웃 커스텀
-    fig.update_layout(hovermode="x unified")
+    fig_line.update_layout(hovermode="x unified")
 
     # Streamlit에 Plotly 그래프 출력
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig_line, use_container_width=True)
 
-    # [5. 그래프 설명 문구 자리]
+    # 그래프 설명 문구
     st.info(
-        f"💡 **이 그래프로 알 수 있는 것:** {selected_movie}의 개봉 초기 관객 집중도 및 상영 기간 동안의 흥행 추이를 한눈에 확인할 수 있습니다."
+        f"💡 **이 그래프로 알 수 있는 것:** {selected_movie}의 개봉 초기 관객 집중도 및 상영 기간 동안의 일자별 흥행 추이를 한눈에 확인할 수 있습니다."
     )
 
-# [5. 향후 그래프 추가를 위한 예시 구역]
+# [5. 두 번째 그래프: 영역차트]
 with tab2:
-    st.subheader("🚀 추후 새로운 분석 그래프가 추가될 공간입니다.")
-    st.write("예: 주말 vs 평일 관객수 비교, 스크린수 대비 관객수 변화 등")
+    st.subheader(f"📈 '{selected_movie}' 누적 관객수 변화")
 
-    # 향후 추가될 그래프 하단 설명 위치 예시
-    st.info("💡 **이 그래프로 알 수 있는 것:** (추가 예정)")
+    # Plotly 영역 차트 생성
+    fig_area = px.area(
+        filtered_df,
+        x="기준일자",
+        y="누적관객수",
+        title=f"{selected_movie} - 누적 관객수 증가 추이",
+        labels={"기준일자": "날짜", "누적관객수": "누적 관객수(명)"},
+    )
+
+    # 그래프 레이아웃 커스텀
+    fig_area.update_layout(hovermode="x unified")
+
+    # Streamlit에 Plotly 그래프 출력
+    st.plotly_chart(fig_area, use_container_width=True)
+
+    # 그래프 설명 문구
+    st.info(
+        f"💡 **이 그래프로 알 수 있는 것:** 상영 기간 동안 {selected_movie}의 누적 관객수가 완만하게 또는 가파르게 증가하는지 볼 수 있으며, 최종 누적 관객수에 도달하는 속도를 파악할 수 있습니다."
+    )
