@@ -39,8 +39,16 @@ movie_rank = (
 )
 movie_list = movie_rank["영화명"].tolist()
 
-# 누적관객수 상위 5개 영화 추출
-top5_movies = movie_rank.head(5)["영화명"].tolist()
+# [수정된 조건] TOP 10 차트 등장 일수가 20일 이상인 영화 중 누적관객수 상위 5개 추출
+# 1. 영화별 등장 일수 계산 (각 행이 해당 날짜의 박스오피스 데이터이므로 수집된 일수 카운트)
+movie_days = df.groupby("영화명")["기준일자"].count()
+
+# 2. 20일 이상 등장한 영화목록 필터링
+over_20days_movies = movie_days[movie_days >= 20].index
+
+# 3. 20일 이상 등장한 영화 중 누적관객수 상위 5개 추출
+filtered_movie_rank = movie_rank[movie_rank["영화명"].isin(over_20days_movies)]
+top5_movies = filtered_movie_rank.head(5)["영화명"].tolist()
 
 # 사이드바에서 영화 선택
 st.sidebar.header("📌 설정")
@@ -53,7 +61,7 @@ filtered_df = df[df["영화명"] == selected_movie]
 tab1, tab2, tab3 = st.tabs([
     "일별 관객수 추이 (선 그래프)",
     "누적 관객수 변화 (영역 차트)",
-    "TOP 5 영화 비교 (다중 선 그래프)"
+    "TOP 5 영화 비교 (20일 이상 차트인)"
 ])
 
 # [4. 첫 번째 그래프: 선그래프]
@@ -93,11 +101,11 @@ with tab2:
         f"💡 **이 그래프로 알 수 있는 것:** 상영 기간 동안 {selected_movie}의 누적 관객수가 완만하게 또는 가파르게 증가하는지 볼 수 있으며, 최종 누적 관객수에 도달하는 속도를 파악할 수 있습니다."
     )
 
-# [6. 세 번째 그래프: 다중 선그래프 (TOP 5 비교)]
+# [6. 세 번째 그래프: 다중 선그래프 (20일 이상 차트인 & TOP 5 비교)]
 with tab3:
-    st.subheader("🏆 누적 관객수 상위 5개 영화 비교")
+    st.subheader("🏆 TOP 10에 20일 이상 유지된 누적 관객수 상위 5개 영화 비교")
 
-    # 상위 5개 영화 데이터만 필터링
+    # 조건을 만족하는 상위 5개 영화 데이터만 필터링
     top5_df = df[df["영화명"].isin(top5_movies)]
 
     # color="영화명"을 통해 영화별로 색상과 범례를 다르게 설정
@@ -106,7 +114,7 @@ with tab3:
         x="기준일자",
         y="누적관객수",
         color="영화명",
-        title="TOP 5 영화의 기준일자별 누적 관객수 추이 비교",
+        title="장기 흥행 영화(20일 이상 TOP 10 유지) 상위 5개의 누적 관객수 추이 비교",
         labels={"기준일자": "날짜", "누적관객수": "누적 관객수(명)", "영화명": "영화 제목"},
     )
     fig_top5.update_layout(hovermode="x unified")
@@ -114,5 +122,6 @@ with tab3:
 
     top5_names_str = ", ".join(top5_movies)
     st.info(
-        f"💡 **이 그래프로 알 수 있는 것:** 가장 높은 누적 관객수를 기록한 상위 5개 영화({top5_names_str})의 관객 수집 속도와 전반적인 흥행 규모를 서로 비교해 볼 수 있습니다."
+        f"💡 **이 그래프로 알 수 있는 것:** TOP 10 박스오피스에 최소 20일 이상 머무르며 장기 흥행에 성공한 대표적인 5개 영화({top5_names_str})의 누적 관객수 증가 양상을 비교 분석할 수 있습니다."
     )
+ 
