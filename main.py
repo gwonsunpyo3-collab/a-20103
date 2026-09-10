@@ -54,12 +54,13 @@ selected_movie = st.sidebar.selectbox("분석할 영화를 선택하세요", mov
 filtered_df = df[df["영화명"] == selected_movie]
 
 # 메인 화면 레이아웃 구역 나누기 (Tab 활용)
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
     "일별 관객수 추이 (선 그래프)",
     "누적 관객수 변화 (영역 차트)",
     "TOP 5 영화 비교 (20일 이상 차트인)",
     "전체 관객수 7일 이동평균 (선 그래프)",
-    "월별 전체 관객수 (막대 그래프)"
+    "월별 전체 관객수 (막대 그래프)",
+    "일별 관객수 분포 (캘린더 히트맵)"
 ])
 
 # [4. 첫 번째 그래프: 선그래프]
@@ -178,20 +179,18 @@ with tab4:
 with tab5:
     st.subheader("📊 월별 TOP10 전체 관객수 합계")
 
-    # 4번 그래프의 daily_total 데이터(기준일자별 관객수 합계)를 바탕으로 월(YYYY-MM) 단위 묶음
     daily_total["연월"] = daily_total["기준일자"].dt.strftime("%Y-%m")
     monthly_total = (
         daily_total.groupby("연월")["해당일관객수"].sum().reset_index()
     )
 
-    # Plotly 막대 그래프 생성
     fig_bar = px.bar(
         monthly_total,
         x="연월",
         y="해당일관객수",
         title="월별 박스오피스 전체 관객수 합계",
         labels={"연월": "연-월", "해당일관객수": "총 관객수(명)"},
-        text_auto=".2s",  # 막대 상단에 간략화된 수치 표시 (예: 1.2M)
+        text_auto=".2s",
     )
 
     fig_bar.update_layout(hovermode="x")
@@ -199,4 +198,50 @@ with tab5:
 
     st.info(
         "💡 **이 그래프로 알 수 있는 것:** 월별 총 관객 규모를 비교하여 영화 시장의 월별 성수기와 비성수기(예: 방학/휴가철, 명절 시즌 등) 양상을 명확하게 파악할 수 있습니다."
+    )
+
+# [9. 여섯 번째 그래프: 캘린더 히트맵]
+with tab6:
+    st.subheader("🗓️ 기준일자별 전체 관객수 캘린더 히트맵")
+
+    # 4번 그래프에서 구한 daily_total 데이터 활용
+    heatmap_df = daily_total.copy()
+
+    # 요일 이름 및 순서 정의 (월요일~일요일)
+    weekday_map = {0: "월요일", 1: "화요일", 2: "수요일", 3: "목요일", 4: "금요일", 5: "토요일", 6: "일요일"}
+    heatmap_df["요일코드"] = heatmap_df["기준일자"].dt.dayofweek
+    heatmap_df["요일"] = heatmap_df["요일코드"].map(weekday_map)
+    heatmap_df["날짜문자열"] = heatmap_df["기준일자"].dt.strftime("%Y-%m-%d")
+
+    # Y축 요일 순서를 '월요일'부터 '일요일'로 고정 (위에서 아래 방향)
+    weekday_order = ["일요일", "토요일", "금요일", "목요일", "수요일", "화요일", "월요일"]
+
+    # Plotly density_heatmap을 이용한 캘린더 히트맵 구현
+    fig_heatmap = px.density_heatmap(
+        heatmap_df,
+        x="기준일자",
+        y="요일",
+        z="해당일관객수",
+        category_orders={"요일": weekday_order},
+        color_continuous_scale="Viridis",
+        title="일별 박스오피스 전체 관객수 히트맵 (월요일~일요일)",
+        labels={"기준일자": "날짜", "요일": "요일", "해당일관객수": "관객수(명)"},
+        hover_data={"기준일자": "|%Y-%m-%d", "해당일관객수": ":,명"},
+    )
+
+    # 마우스 오버 시 YYYY-MM-DD 날짜와 관객수가 한눈에 보이도록 커스텀
+    fig_heatmap.update_traces(
+        hovertemplate="<b>날짜: %{x|%Y-%m-%d}</b><br>요일: %{y}<br>총 관객수: %{z:,}명<extra></extra>"
+    )
+
+    fig_heatmap.update_layout(
+        xaxis_title="날짜",
+        yaxis_title="요일",
+        coloraxis_colorbar=dict(title="관객수(명)")
+    )
+
+    st.plotly_chart(fig_heatmap, use_container_width=True)
+
+    st.info(
+        "💡 **이 그래프로 알 수 있는 것:** 요일별 관객집중도(주말 vs 평일)와 특정 연휴, 공휴일 또는 대형 신작 개봉일에 관객수가 급증하는 패턴을 캘린더 형태의 색상 농도로 명확하게 확인할 수 있습니다."
     )
