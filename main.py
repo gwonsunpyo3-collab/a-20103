@@ -54,11 +54,12 @@ selected_movie = st.sidebar.selectbox("분석할 영화를 선택하세요", mov
 filtered_df = df[df["영화명"] == selected_movie]
 
 # 메인 화면 레이아웃 구역 나누기 (Tab 활용)
-tab1, tab2, tab3, tab4 = st.tabs([
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "일별 관객수 추이 (선 그래프)",
     "누적 관객수 변화 (영역 차트)",
     "TOP 5 영화 비교 (20일 이상 차트인)",
     "전체 관객수 7일 이동평균 (선 그래프)",
+    "월별 전체 관객수 (막대 그래프)"
 ])
 
 # [4. 첫 번째 그래프: 선그래프]
@@ -171,4 +172,31 @@ with tab4:
 
     st.info(
         "💡 **이 그래프로 알 수 있는 것:** 요일별 단기 변동(주말 급증 등)에 따른 노이즈를 줄이고, 전체 극장가의 성수기/비성수기 등 전반적인 시장 흐름과 관객수 변화 추세를 명확하게 확인할 수 있습니다."
+    )
+
+# [8. 다섯 번째 그래프: 월별 전체 관객수 막대 그래프]
+with tab5:
+    st.subheader("📊 월별 TOP10 전체 관객수 합계")
+
+    # 4번 그래프의 daily_total 데이터(기준일자별 관객수 합계)를 바탕으로 월(YYYY-MM) 단위 묶음
+    daily_total["연월"] = daily_total["기준일자"].dt.strftime("%Y-%m")
+    monthly_total = (
+        daily_total.groupby("연월")["해당일관객수"].sum().reset_index()
+    )
+
+    # Plotly 막대 그래프 생성
+    fig_bar = px.bar(
+        monthly_total,
+        x="연월",
+        y="해당일관객수",
+        title="월별 박스오피스 전체 관객수 합계",
+        labels={"연월": "연-월", "해당일관객수": "총 관객수(명)"},
+        text_auto=".2s",  # 막대 상단에 간략화된 수치 표시 (예: 1.2M)
+    )
+
+    fig_bar.update_layout(hovermode="x")
+    st.plotly_chart(fig_bar, use_container_width=True)
+
+    st.info(
+        "💡 **이 그래프로 알 수 있는 것:** 월별 총 관객 규모를 비교하여 영화 시장의 월별 성수기와 비성수기(예: 방학/휴가철, 명절 시즌 등) 양상을 명확하게 파악할 수 있습니다."
     )
