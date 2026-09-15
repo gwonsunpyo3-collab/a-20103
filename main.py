@@ -127,11 +127,50 @@ top_movie = df.loc[df['total_audi'].idxmax()]
 top_movie_name = top_movie['movieNm']
 top_movie_audi = top_movie['total_audi']
 
-# 그래프 분석 내용 안내 구역 (동적 분석 문구)
+# 그래프 분석 내용 안내 구역
 st.markdown("**💡 이 그래프로 알 수 있는 것**")
 st.info(
     f"대부분의 영화는 관객 수 최하위 구간(약 100만 명 이하)에 쏠려 있으며, "
     f"가장 많은 관객을 동원한 영화는 **'{top_movie_name}'**(총 {top_movie_audi:,.0f}명)입니다."
 )
+
+st.markdown("---")
+
+# -------------------------------------------------------------------
+# 네 번째 그래프: 개봉일 스크린수 vs 총 관객 수 (산점도)
+# -------------------------------------------------------------------
+st.subheader("4. 개봉일 스크린수와 총 관객 수의 관계")
+
+# Plotly 산점도 생성 (장르별 색상 지정, 영화명 마우스 호버 노출)
+fig_scatter = px.scatter(
+    df,
+    x='first_scrn',
+    y='total_audi',
+    color='genre',
+    hover_name='movieNm',
+    title="개봉일 스크린수 대비 총 관객 수 관계",
+    labels={
+        'first_scrn': '개봉일 스크린수 (개)',
+        'total_audi': '총 관객 수 (명)',
+        'genre': '장르'
+    }
+)
+
+# 호버 툴팁 설정
+fig_scatter.update_traces(
+    hovertemplate="<b>%{hovertext}</b><br>개봉일 스크린수: %{x:,.0f}개<br>총 관객 수: %{y:,.0f}명<extra></extra>"
+)
+
+fig_scatter.update_layout(
+    xaxis_title="개봉일 스크린수 (개)",
+    yaxis_title="총 관객 수 (명)"
+)
+
+# Streamlit에 그래프 출력
+st.plotly_chart(fig_scatter, use_container_width=True)
+
+# 그래프 분석 내용 안내 구역
+st.markdown("**💡 이 그래프로 알 수 있는 것**")
+st.info("개봉일 스크린수가 확보될수록 대체로 총 관객 수가 증가하는 경향을 보이지만, 초기 스크린수가 적더라도 입소문 등을 통해 대형 흥행을 이뤄낸 이상치(Outlier) 영화도 존재합니다.")
 
 st.markdown("---")
