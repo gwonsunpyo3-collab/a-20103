@@ -20,6 +20,7 @@ def load_data():
     
     # genre 열 전처리: 세로막대 기호(|)로 분리 후 첫 번째 장르만 추출
     df['genre'] = df['genre'].fillna('미상').astype(str).apply(lambda x: x.split('|')[0].strip())
+    df['nation'] = df['nation'].fillna('기타').astype(str).apply(lambda x: x.strip())
     
     return df
 
@@ -193,7 +194,7 @@ st.info("대부분 장르의 중위 관객 수 분포는 낮게 형성되어 있
 st.markdown("---")
 
 # -------------------------------------------------------------------
-# 여섯 번째 그래프: 개봉일 스크린수 vs 총 관객 수 버블 그래프 (크기: 개봉 첫 주 관객)
+# 여섯 번째 그래프: 개봉일 스크린수 vs 총 관객 수 버블 그래프
 # -------------------------------------------------------------------
 st.subheader("6. 개봉일 스크린수와 총 관객 수의 관계 (버블 크기: 개봉 첫 주 관객)")
 
@@ -230,3 +231,28 @@ st.info("개봉 첫 주 관객(버블 크기)이 많을수록 최종 총 관객 
 
 st.markdown("---")
 
+# -------------------------------------------------------------------
+# 일곱 번째 그래프: 제작 국가별 장르 분포 (선버스트 그래프)
+# -------------------------------------------------------------------
+st.subheader("7. 제작 국가 및 장르별 영화 편수 (선버스트 그래프)")
+
+# 국가별, 장르별 영화 편수 집계
+df_sunburst = df.groupby(['nation', 'genre']).size().reset_index(name='movie_count')
+
+fig_sunburst = px.sunburst(
+    df_sunburst,
+    path=['nation', 'genre'],
+    values='movie_count',
+    title="제작 국가 → 장르 계층구조별 영화 편수 (칸 크기 = 영화 편수)"
+)
+
+fig_sunburst.update_traces(
+    hovertemplate="<b>%{label}</b><br>영화 편수: %{value}편<extra></extra>"
+)
+
+st.plotly_chart(fig_sunburst, use_container_width=True)
+
+st.markdown("**💡 이 그래프로 알 수 있는 것**")
+st.info("한국과 미국 등 주요 제작 국가에 따라 주로 제작 및 개봉되는 중심 장르의 구성 비중에 확연한 차이가 나타납니다.")
+
+st.markdown("---")
