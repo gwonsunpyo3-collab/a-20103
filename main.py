@@ -236,7 +236,6 @@ st.markdown("---")
 # -------------------------------------------------------------------
 st.subheader("7. 제작 국가 및 장르별 영화 편수 (선버스트 그래프)")
 
-# 국가별, 장르별 영화 편수 집계
 df_sunburst = df.groupby(['nation', 'genre']).size().reset_index(name='movie_count')
 
 fig_sunburst = px.sunburst(
@@ -254,5 +253,43 @@ st.plotly_chart(fig_sunburst, use_container_width=True)
 
 st.markdown("**💡 이 그래프로 알 수 있는 것**")
 st.info("한국과 미국 등 주요 제작 국가에 따라 주로 제작 및 개봉되는 중심 장르의 구성 비중에 확연한 차이가 나타납니다.")
+
+st.markdown("---")
+
+# -------------------------------------------------------------------
+# 여덟 번째 그래프: 질문 기반 산점도
+# -------------------------------------------------------------------
+st.subheader("8. 개봉 첫주의 관객이 영화의 흥행에 어떤 영향을 주는가")
+
+fig_q8 = px.scatter(
+    df,
+    x='days_in_top10',
+    y='total_audi',
+    size='first_week_audi',
+    color='genre',
+    hover_name='movieNm',
+    size_max=40,
+    title="개봉 첫주의 관객이 영화의 흥행에 어떤 영향을 주는가",
+    labels={
+        'days_in_top10': '10위권에 머문 날수 (일)',
+        'total_audi': '총 관객 수 (명)',
+        'first_week_audi': '개봉 첫 주 관객 (명)',
+        'genre': '장르'
+    }
+)
+
+fig_q8.update_traces(
+    hovertemplate="<b>%{hovertext}</b><br>10위권 머문 날수: %{x}일<br>총 관객 수: %{y:,.0f}명<br>첫 주 관객 수: %{marker.size:,.0f}명<extra></extra>"
+)
+
+fig_q8.update_layout(
+    xaxis_title="10위권에 머문 날수 (일)",
+    yaxis_title="총 관객 수 (명)"
+)
+
+st.plotly_chart(fig_q8, use_container_width=True)
+
+st.markdown("**💡 이 그래프로 알 수 있는 것**")
+st.info("개봉 첫 주 관객 수(점의 크기)가 많은 영화일수록 10위권에 오래 장기 집권(X축)하며 최종 총 관객 수(Y축)도 압도적으로 높아져 초기 흥행이 장기 흥행으로 연결됨을 알 수 있습니다.")
 
 st.markdown("---")
